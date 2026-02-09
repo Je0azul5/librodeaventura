@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import './App.css';
-import logoSrc from '/GoMun.png';
+import logoSrc from '/librodeaventura.png';
 
 type AgendaEntry = {
   id: string;
@@ -21,7 +21,7 @@ type AgendaSection = {
 };
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
-const DEFAULT_USER_ID = (import.meta.env.VITE_DEFAULT_USER_ID ?? 'couple').trim() || 'couple';
+const DEFAULT_USER_ID = (import.meta.env.VITE_DEFAULT_USER_ID ?? 'Nosotros').trim() || 'couple';
 const ITEMS_PER_PAGE = 5;
 
 const isLatinLetter = (char: string) => /^[A-Z]$/.test(char);
@@ -206,7 +206,7 @@ function App() {
 
     const trimmedTitle = formState.title.trim();
     if (!trimmedTitle) {
-      setFormError('Every dream needs a name.');
+      setFormError('Every Adventure needs a name.');
       return;
     }
 
@@ -258,7 +258,7 @@ function App() {
 
   const handleDeleteEntry = async (entry: AgendaEntry) => {
     // eslint-disable-next-line no-alert
-    const confirmation = window.confirm(`Erase "${entry.title}" from your dreams?`);
+    const confirmation = window.confirm(`Erase "${entry.title}" from your Adventures?`);
     if (!confirmation) return;
 
     setDeletingIds((prev) => {
@@ -321,11 +321,11 @@ function App() {
     <div className="agenda-shell">
       <header className="agenda-header">
         <div className="title-row">
-          <img src={logoSrc} alt="GoMun emblem" className="brand-mark" />
-          <h1>GoMun</h1>
+          <img src={logoSrc} alt="Libro de aventura emblem" className="brand-mark" />
+          <h1>Nuestro Libro de Aventuras</h1>
         </div>
-        <p>Every shared dream — one letter at a time.</p>
-        <p>No dreamers to define — just you and me in this story.</p>
+        <p>Por cada idea - una aventura.</p>
+        <p>El inicio de un nuevo recorrido por nuestro espacio.</p>
         <div className="agenda-header-actions">
           <nav className="agenda-nav" aria-label="Primary navigation">
             <button
@@ -333,18 +333,18 @@ function App() {
               className={`nav-link${activeView === 'agenda' ? ' active' : ''}`}
               onClick={() => setActiveView('agenda')}
             >
-              Library
+              Aventuras
             </button>
             <button
               type="button"
               className={`nav-link${activeView === 'search' ? ' active' : ''}`}
               onClick={() => setActiveView('search')}
             >
-              Search
+              Explorar
             </button>
           </nav>
           <button className="new-entry-button" type="button" onClick={openNewEntry}>
-            + New Dream
+            + Nueva aventura
           </button>
         </div>
       </header>
@@ -382,7 +382,7 @@ function App() {
             onClick={(event) => event.stopPropagation()}
           >
             <header className="entry-modal-header">
-              <h2 id="entry-modal-title">{isEditing ? 'Edit Dream' : 'New Dream'}</h2>
+              <h2 id="entry-modal-title">{isEditing ? 'Edit Adventure' : 'Nueva aventura'}</h2>
               <button className="modal-close" type="button" onClick={closeForm} aria-label="Close">
                 ×
               </button>
@@ -390,7 +390,7 @@ function App() {
 
             <form className="entry-form" onSubmit={handleSubmitEntry}>
               <label className="form-field">
-                <span>Dream</span>
+                <span>Aventura</span>
                 <input
                   type="text"
                   name="title"
@@ -403,7 +403,7 @@ function App() {
 
               {!isEditing && (
                 <label className="form-field">
-                  <span>Dreamer</span>
+                  <span>Aventureros</span>
                   <input
                     type="text"
                     name="userId"
@@ -411,13 +411,13 @@ function App() {
                     onChange={(event) =>
                       setFormState((prev) => ({ ...prev, userId: event.target.value }))
                     }
-                    placeholder="couple"
+                    placeholder="Nosotros"
                   />
                 </label>
               )}
 
               <label className="form-field">
-                <span>Note</span>
+                <span>Nota</span>
                 <textarea
                   name="note"
                   value={formState.note}
@@ -439,8 +439,8 @@ function App() {
                       ? 'Updating…'
                       : 'Inscribing…'
                     : isEditing
-                      ? 'Update Dream'
-                      : 'Save Dream'}
+                      ? 'Update Adventure'
+                      : 'Save Adventure'}
                 </button>
               </footer>
             </form>
@@ -473,7 +473,7 @@ function AgendaView({
   onPageChange,
 }: AgendaViewProps) {
   if (loading) {
-    return <p className="agenda-status">Summoning your dreams adventures…</p>;
+    return <p className="agenda-status">Summoning your Adventures adventures…</p>;
   }
 
   if (error) {
@@ -481,7 +481,7 @@ function AgendaView({
   }
 
   if (sections.length === 0) {
-    return <p className="agenda-status">Our first dream together.</p>;
+    return <p className="agenda-status">Our first adventure together.</p>;
   }
 
   return (
@@ -609,8 +609,8 @@ function SearchView({ entries, loading, error, deletingIds, onEdit, onDelete, on
             className="search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search dreams by title, note, user, or date…"
-            aria-label="Search dreams"
+            placeholder="Search aventures by title, note, user, or date…"
+            aria-label="Search aventures"
           />
           {query && (
             <button type="button" className="search-clear" onClick={() => setQuery('')}>
@@ -619,22 +619,22 @@ function SearchView({ entries, loading, error, deletingIds, onEdit, onDelete, on
           )}
         </div>
 
-        {loading && <p className="agenda-status">Summoning your dreams…</p>}
+        {loading && <p className="agenda-status">Summoning your aventures</p>}
         {!loading && error && <p className="agenda-status error">{error}</p>}
         {!loading && !error && entries.length === 0 && (
-          <p className="agenda-status">ur first dream together</p>
+          <p className="agenda-status">our first aventures together</p>
         )}
 
         {!loading && !error && entries.length > 0 && (
           <p className="search-summary">
             {query
-              ? `${filtered.length} dream${filtered.length === 1 ? '' : 's'} match “${query}”.`
-              : `Browsing all ${entries.length} dream${entries.length === 1 ? '' : 's'}.`}
+              ? `${filtered.length} aventures${filtered.length === 1 ? '' : 's'} match “${query}”.`
+              : `Browsing all ${entries.length} aventures${entries.length === 1 ? '' : 's'}.`}
           </p>
         )}
 
         {!loading && !error && filtered.length === 0 && entries.length > 0 && (
-          <p className="agenda-status search-status">No dreams match your incantation.</p>
+          <p className="agenda-status search-status">No aventures match your incantation.</p>
         )}
       </div>
 
@@ -699,7 +699,7 @@ function EntryCard({ entry, isDeleting, onEdit, onDelete, onToggleDone }: EntryC
             onChange={() => onToggleDone(entry)}
             disabled={isDeleting}
           />
-          <span>{entry.done ? '🌼 Dream come true' : '✨ Still a dream'}</span>
+          <span>{entry.done ? '🎆 aventures come true' : '✨ Still a aventures'}</span>
         </label>
       </div>
       <div className="entry-title">{entry.title}</div>

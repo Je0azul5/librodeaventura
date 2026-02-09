@@ -134,4 +134,4 @@ app.get('*', (req, res, next) => {
 });
 
 const port = Number(process.env.PORT) || 8080;
-app.listen(port, '0.0.0.0', () => console.log(`🚀 GoMun API running on port ${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`🚀 Libro de aventuras API running on port ${port}`));
