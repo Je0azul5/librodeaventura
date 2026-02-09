@@ -1,4 +1,16 @@
 :root {
+  --bg: #0b0014;
+  --bg-2: #12001f;
+  --surface: #140024;
+  --surface-2: #1b0033;
+  --text: #f3e9ff;
+  --muted: #c9b5e6;
+  --neon: #b400ff;
+  --neon-2: #ff2cff;
+  --accent: #ffe600;
+  --accent-2: #ffd100;
+  --danger: #ff4d6d;
+
   font-family: 'Cinzel', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   line-height: 1.5;
   font-weight: 400;
@@ -6,8 +18,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #946de7;
-  color: #3d2a4d;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 body {
