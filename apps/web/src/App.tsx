@@ -54,6 +54,7 @@ function App() {
     title: '',
     note: '',
     userId: DEFAULT_USER_ID,
+    date: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -177,7 +178,7 @@ function App() {
   const openNewEntry = () => {
     setActiveView('agenda');
     setEditingEntryId(null);
-    setFormState({ title: '', note: '', userId: DEFAULT_USER_ID });
+    setFormState({ title: '', note: '', userId: DEFAULT_USER_ID, date: '' });
     setFormError(null);
     setIsFormOpen(true);
   };
@@ -188,6 +189,7 @@ function App() {
       title: entry.title,
       note: entry.note ?? '',
       userId: entry.userId ?? DEFAULT_USER_ID,
+      date: entry.date ? entry.date.slice(0, 10) : '',
     });
     setFormError(null);
     setIsFormOpen(true);
@@ -196,7 +198,7 @@ function App() {
   const closeForm = () => {
     setIsFormOpen(false);
     setFormError(null);
-    setFormState({ title: '', note: '', userId: DEFAULT_USER_ID });
+    setFormState({ title: '', note: '', userId: DEFAULT_USER_ID, date: '' });
     setEditingEntryId(null);
   };
 
@@ -210,12 +212,16 @@ function App() {
       return;
     }
 
-    const payload: { title: string; note?: string; userId?: string } = {
+    const payload: { title: string; note?: string; userId?: string; date?: string } = {
       title: trimmedTitle,
     };
 
     if (formState.note.trim()) {
       payload.note = formState.note.trim();
+    }
+
+    if (formState.date.trim()) {
+      payload.date = formState.date.trim();
     }
 
     if (!isEditing) {
@@ -415,6 +421,16 @@ function App() {
                   />
                 </label>
               )}
+
+              <label className="form-field">
+                <span>Fecha</span>
+                <input
+                  type="date"
+                  name="date"
+                  value={formState.date}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, date: event.target.value }))}
+                />
+              </label>
 
               <label className="form-field">
                 <span>Nota</span>
