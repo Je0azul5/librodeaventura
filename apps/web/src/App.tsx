@@ -13,6 +13,14 @@ type AgendaEntry = {
   userId: string;
 };
 
+type Challenge = {
+  id: string;
+  name: string;
+  prize?: string | null;
+  winner?: string | null;
+  createdAt: string;
+};
+
 type AgendaSection = {
   letter: string;
   visible: AgendaEntry[];
@@ -44,9 +52,12 @@ function formatDate(value?: string | null) {
 
 function App() {
   const [entries, setEntries] = useState<AgendaEntry[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [challengesLoading, setChallengesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<'agenda' | 'search'>('agenda');
+  const [challengesError, setChallengesError] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'agenda' | 'search' | 'challenges'>('agenda');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [pageByLetter, setPageByLetter] = useState<Record<string, number>>({});
@@ -59,6 +70,14 @@ function App() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [challengeForm, setChallengeForm] = useState({
+    name: '',
+    prize: '',
+    winner: '',
+  });
+  const [editingChallengeId, setEditingChallengeId] = useState<string | null>(null);
+  const [challengeSubmitting, setChallengeSubmitting] = useState(false);
+  const [challengeFormError, setChallengeFormError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -89,7 +108,34 @@ function App() {
       }
     }
 
+    async function loadChallenges() {
+      setChallengesLoading(true);
+      setChallengesError(null);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/challenges`);
+
+        if (!response.ok) {
+          throw new Error(`Unable to load challenges (${response.status})`);
+        }
+
+        const data: Challenge[] = await response.json();
+        if (isMounted) {
+          setChallenges(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setChallengesError(err instanceof Error ? err.message : 'Unexpected error');
+        }
+      } finally {
+        if (isMounted) {
+          setChallengesLoading(false);
+        }
+      }
+    }
+
     loadEntries();
+    loadChallenges();
     return () => {
       isMounted = false;
     };
@@ -323,6 +369,62 @@ function App() {
     setPageByLetter((prev) => ({ ...prev, [letter]: page }));
   };
 
+  const handleChallengeSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setChallengeFormError(null);
+
+    const name = challengeForm.name.trim();
+    if (!name) {
+      setChallengeFormError('El nombre del reto es obligatorio.');
+      return;
+    }
+
+    const payload: { name: string; prize?: string; winner?: string } = { name };
+    if (challengeForm.prize.trim()) {
+      payload.prize = challengeForm.prize.trim();
+    }
+    if (challengeForm.winner.trim()) {
+      payload.winner = challengeForm.winner.trim();
+    }
+
+    setChallengeSubmitting(true);
+    try {
+      const endpoint = editingChallengeId
+        ? `${API_BASE}/api/challenges/${editingChallengeId}`
+        : `${API_BASE}/api/challenges`;
+      const response = await fetch(endpoint, {
+        method: editingChallengeId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Unable to save challenge (${response.status})`);
+      }
+
+      const saved: Challenge = await response.json();
+      setChallenges((prev) =>
+        editingChallengeId ? prev.map((item) => (item.id === saved.id ? saved : item)) : [saved, ...prev]
+      );
+      setChallengeForm({ name: '', prize: '', winner: '' });
+      setEditingChallengeId(null);
+    } catch (err) {
+      setChallengeFormError(err instanceof Error ? err.message : 'Unable to save challenge');
+    } finally {
+      setChallengeSubmitting(false);
+    }
+  };
+
+  const handleEditChallenge = (challenge: Challenge) => {
+    setEditingChallengeId(challenge.id);
+    setChallengeForm({
+      name: challenge.name,
+      prize: challenge.prize ?? '',
+      winner: challenge.winner ?? '',
+    });
+    setChallengeFormError(null);
+  };
+
   return (
     <div className="agenda-shell">
       <header className="agenda-header">
@@ -348,6 +450,13 @@ function App() {
             >
               Explorar
             </button>
+            <button
+              type="button"
+              className={`nav-link${activeView === 'challenges' ? ' active' : ''}`}
+              onClick={() => setActiveView('challenges')}
+            >
+              Retos
+            </button>
           </nav>
           <button className="new-entry-button" type="button" onClick={openNewEntry}>
             + Nueva aventura
@@ -366,7 +475,7 @@ function App() {
           onToggleDone={handleToggleDone}
           onPageChange={handlePageChange}
         />
-      ) : (
+      ) : activeView === 'search' ? (
         <SearchView
           entries={entries}
           loading={loading}
@@ -375,6 +484,19 @@ function App() {
           onEdit={openEditEntry}
           onDelete={handleDeleteEntry}
           onToggleDone={handleToggleDone}
+        />
+      ) : (
+        <ChallengesView
+          challenges={challenges}
+          loading={challengesLoading}
+          error={challengesError}
+          formState={challengeForm}
+          submitting={challengeSubmitting}
+          formError={challengeFormError}
+          editingId={editingChallengeId}
+          onChange={setChallengeForm}
+          onSubmit={handleChallengeSubmit}
+          onEdit={handleEditChallenge}
         />
       )}
 
@@ -675,6 +797,119 @@ function SearchView({ entries, loading, error, deletingIds, onEdit, onDelete, on
               ))}
             </ul>
           </section>
+        ))}
+    </div>
+  );
+}
+
+type ChallengesViewProps = {
+  challenges: Challenge[];
+  loading: boolean;
+  error: string | null;
+  formState: { name: string; prize: string; winner: string };
+  submitting: boolean;
+  formError: string | null;
+  editingId: string | null;
+  onChange: (next: { name: string; prize: string; winner: string }) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onEdit: (challenge: Challenge) => void;
+};
+
+function ChallengesView({
+  challenges,
+  loading,
+  error,
+  formState,
+  submitting,
+  formError,
+  editingId,
+  onChange,
+  onSubmit,
+  onEdit,
+}: ChallengesViewProps) {
+  return (
+    <div className="book-wrapper search-wrapper">
+      <div className="search-lead">
+        <h2 className="entry-title">Retos</h2>
+        <p className="entry-note">Crea retos con su premio y ganador.</p>
+
+        <form className="entry-form" onSubmit={onSubmit}>
+          <label className="form-field">
+            <span>Nombre del reto</span>
+            <input
+              type="text"
+              name="name"
+              value={formState.name}
+              onChange={(event) => onChange({ ...formState, name: event.target.value })}
+              placeholder="Maratón de películas"
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Premio</span>
+            <input
+              type="text"
+              name="prize"
+              value={formState.prize}
+              onChange={(event) => onChange({ ...formState, prize: event.target.value })}
+              placeholder="Cena especial"
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Ganador</span>
+            <input
+              type="text"
+              name="winner"
+              value={formState.winner}
+              onChange={(event) => onChange({ ...formState, winner: event.target.value })}
+              placeholder="Nosotros"
+            />
+          </label>
+
+          {formError && <p className="form-error">{formError}</p>}
+
+          <footer className="form-actions">
+            <button type="submit" disabled={submitting}>
+              {submitting ? 'Guardando…' : editingId ? 'Actualizar reto' : 'Guardar reto'}
+            </button>
+          </footer>
+        </form>
+
+        {loading && <p className="agenda-status">Cargando retos…</p>}
+        {!loading && error && <p className="agenda-status error">{error}</p>}
+        {!loading && !error && challenges.length === 0 && (
+          <p className="agenda-status">Aún no hay retos.</p>
+        )}
+      </div>
+
+      {!loading &&
+        !error &&
+        challenges.length > 0 &&
+        challenges.map((challenge) => (
+          <article key={challenge.id} className="entry-card">
+            <div className="entry-actions">
+              <button
+                type="button"
+                className="entry-edit-button"
+                onClick={() => onEdit(challenge)}
+                disabled={submitting}
+              >
+                Editar
+              </button>
+            </div>
+            <div className="entry-title">{challenge.name}</div>
+            {(challenge.prize || challenge.winner) && (
+              <p className="entry-note">
+                {challenge.prize ? `Premio: ${challenge.prize}` : 'Premio pendiente'}
+                {challenge.winner ? ` · Ganador: ${challenge.winner}` : ' · Ganador pendiente'}
+              </p>
+            )}
+            <footer className="entry-meta">
+              <span>{formatDate(challenge.createdAt)}</span>
+            </footer>
+          </article>
         ))}
     </div>
   );

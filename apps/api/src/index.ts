@@ -25,6 +25,11 @@ app.get('/api/entries', async (_req, res) => {
   res.json(data);
 });
 
+app.get('/api/challenges', async (_req, res) => {
+  const data = await prisma.challenge.findMany({ orderBy: { createdAt: 'desc' } });
+  res.json(data);
+});
+
 app.post('/api/entries', async (req, res) => {
   const { title, note, date, userId } = req.body ?? {};
 
@@ -46,6 +51,59 @@ app.post('/api/entries', async (req, res) => {
     },
   });
   res.status(201).json(created);
+});
+
+app.post('/api/challenges', async (req, res) => {
+  const { name, prize, winner } = req.body ?? {};
+
+  if (typeof name !== 'string' || !name.trim()) {
+    res.status(400).json({ error: 'Name is required.' });
+    return;
+  }
+
+  const created = await prisma.challenge.create({
+    data: {
+      name: name.trim(),
+      prize: typeof prize === 'string' && prize.trim() ? prize.trim() : null,
+      winner: typeof winner === 'string' && winner.trim() ? winner.trim() : null,
+    },
+  });
+  res.status(201).json(created);
+});
+
+app.put('/api/challenges/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, prize, winner } = req.body ?? {};
+
+  if (!id) {
+    res.status(400).json({ error: 'Challenge id is required.' });
+    return;
+  }
+
+  if (typeof name !== 'string' || !name.trim()) {
+    res.status(400).json({ error: 'Name is required.' });
+    return;
+  }
+
+  try {
+    const updated = await prisma.challenge.update({
+      where: { id },
+      data: {
+        name: name.trim(),
+        prize: typeof prize === 'string' && prize.trim() ? prize.trim() : null,
+        winner: typeof winner === 'string' && winner.trim() ? winner.trim() : null,
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2025') {
+      res.status(404).json({ error: 'Challenge not found.' });
+      return;
+    }
+
+    res.status(500).json({ error: 'Unable to update challenge.' });
+  }
 });
 
 app.put('/api/entries/:id', async (req, res) => {

@@ -16,3 +16,11 @@ model Entry {
   done      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model Challenge {
+  id        String   @id @default(uuid())
+  name      String
+  prize     String?
+  winner    String?
+  createdAt DateTime @default(now())
+}
